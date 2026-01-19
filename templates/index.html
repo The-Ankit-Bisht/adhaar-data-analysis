@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UIDAI AADHAAR DATA</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<div class="container">
+
+    <h1>UIDAI Aadhaar Data Dashboard</h1>
+
+    <div class="card">
+    <form method="POST">
+
+        <div class="folder-grid">
+
+            {% for folder in subfolders %}
+            <div class="folder-box {% if folder == selected_folder %}active{% endif %}"
+                onclick="selectFolder('{{ folder }}')">
+                {{ folder.replace('api_data_','').replace('_',' ').title() }}
+            </div>
+            {% endfor %}
+
+        </div>
+
+        <input type="hidden" name="datafolder" id="datafolder" value="{{ selected_folder if selected_folder else '' }}">
+
+        {% if selected_folder %}
+        <hr>
+
+        <label>Choose Display Type:</label><br>
+
+        <input type="radio" name="view_type" value="date" id="dateRadio"
+               {% if view_type == "date" %}checked{% endif %}
+               onclick="toggleOptions()"> States  
+
+        <input type="radio" name="view_type" value="state" id="stateRadio"
+               {% if view_type == "state" %}checked{% endif %}
+               onclick="toggleOptions()"> Time Period  
+
+        <br><br>
+
+        <div id="dateOptions">
+            <label>Select State:</label>
+            <select name="state_filter">
+                <option value="">All States</option>
+                {% for s in states %}
+                    <option value="{{ s }}" {% if s == request.form.get('state_filter') %}selected{% endif %}>{{ s.replace('_',' ').title() }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div id="stateOptions">
+            <label>Date Range:</label><br>
+            Start Date:
+            <input type="date" name="start_date"
+                   value="{{ min_date }}" min="{{ min_date }}" max="{{ max_date }}">
+            End Date:
+            <input type="date" name="end_date"
+                   value="{{ max_date }}" min="{{ min_date }}" max="{{ max_date }}">
+        </div>
+
+        <div id="loader" style="display:none;">Generating plot...</div>
+
+        <br><br>
+        <button type="submit" name="action" value="generate" onclick="document.getElementById('loader').style.display='block'">Generate</button>
+
+        {% endif %}
+
+    </form>
+    </div>
+
+    {% if date_table %}
+    <div class="card">
+        <h2>Table</h2>
+        <div class="table-wrapper">{{ date_table | safe }}</div>
+        <h2>Graph</h2>
+        <img src="{{ url_for('static', filename=date_plot) }}">
+    </div>
+    {% endif %}
+
+    {% if state_table %}
+    <div class="card">
+        <h2>Table</h2>
+        <div class="table-wrapper">{{ state_table | safe }}</div>
+        <h2>Graph</h2>
+        <img src="{{ url_for('static', filename=state_plot) }}">
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- JavaScript -->
+<script>
+function toggleOptions() {
+    let dateDiv = document.getElementById("dateOptions");
+    let stateDiv = document.getElementById("stateOptions");
+    let dateRadio = document.getElementById("dateRadio");
+
+    if (dateRadio.checked) {
+        dateDiv.style.display = "block";
+        stateDiv.style.display = "none";
+    } else {
+        dateDiv.style.display = "none";
+        stateDiv.style.display = "block";
+    }
+}
+
+function selectFolder(folderName){
+    document.getElementById("datafolder").value = folderName;
+    document.forms[0].submit();
+}
+
+// Run once on page load
+window.onload = toggleOptions;
+</script>
+
+</body>
+</html>
